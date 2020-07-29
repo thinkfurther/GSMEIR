@@ -43,6 +43,7 @@ angles=linspace(0,2*pi,30);
 % Simulate forward projection.
 % Strongly suggested to use 'iterpolated' option for more accurate
 % projections. reduce geo.accuracy for better results
+global noise_projections;
 projections = zeros(geo.nDetector(2),geo.nDetector(1),length(angles), phaseNumber);
 noise_projections = zeros(geo.nDetector(2),geo.nDetector(1),length(angles), phaseNumber);
 for phaseIdx = 1 : phaseNumber
@@ -58,6 +59,7 @@ end
 % obj = Atb((projections(:,:,:,1)),geo,angles,'matched');
 
 qualmeas={'RMSE','MSSIM'};
+global reconPhantoms;
 reconPhantoms = zeros(size(phantoms));
 for phaseIdx = 1 : phaseNumber
 [imgSART,errL2SART,qualitySART]=SART_TV(noise_projections(:,:,:,phaseIdx),geo,angles,30,...
@@ -65,6 +67,7 @@ for phaseIdx = 1 : phaseNumber
 reconPhantoms(:,:,:,phaseIdx) = imgSART;
 end
 
+global DVFsForward DVFsBackward;
 DVFsForward = zeros([geo.nVoxel(1),geo.nVoxel(2),geo.nVoxel(3) , 3 , phaseNumber]);
 DVFsBackward = zeros([geo.nVoxel(1),geo.nVoxel(2),geo.nVoxel(3) , 3 , phaseNumber]);
 for phaseIdx = 1 : phaseNumber
@@ -95,13 +98,14 @@ end
 
 % Update DVF in projection domain
 updateNumbers = 10;
+global idx;
 for phaseIdx = 2 : phaseNumber
     for idx = 1 : updateNumbers
         forwardDVF = DVFsForward(:,:,:,:,phaseIdx);
         [forwardDVF fvalForward] = forwardUpdate(forwardDVF);
         DVFsForward(:,:,:,:,phaseIdx) = forwardDVF;
         backwardDVF = DVFsBackward(:,:,:,:,phaseIdx);
-        [backwardDVF fvalBackward] = forwardUpdate(backwardDVF);
+        [backwardDVF fvalBackward] = backwardUpdate(backwardDVF);
         DVFsBackward(:,:,:,:,phaseIdx) = backwardDVF;
     end
 end
